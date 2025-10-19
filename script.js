@@ -2,7 +2,7 @@
 
 document.addEventListener("DOMContentLoaded", function () {
   const API_BASE_URL =
-    "https://assignments.isaaclauzon.com/api/v1/sql/";
+    "https://assignments.isaaclauzon.com/comp4537/labs/5/api/v1/sql/";
 
   // Get elements ONCE and store them
   const postButton = document.getElementById("static-post-btn");
