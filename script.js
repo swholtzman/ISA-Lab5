@@ -1,6 +1,30 @@
 "use strict";
 
-document.addEventListener("DOMContentLoaded", function () {
+// Make main function async to allow 'await' for fetching language file
+document.addEventListener("DOMContentLoaded", async function () {
+  let messages;
+  try {
+    // 1. Fetch language file first
+    const response = await fetch("lang.json");
+    if (!response.ok) {
+      throw new Error("Failed to load language file.");
+    }
+    messages = await response.json();
+  } catch (error) {
+    console.error(error);
+
+    // NOTE: Fallback messages if lang.json fails. NOT primary source.
+    messages = {
+      sending: "Sending query...",
+      errorPrefix: "Error: ",
+      emptyQuery: "Please enter a SQL query.",
+      unsupportedQuery: "Error: Only SELECT and INSERT queries are supported.",
+    };
+    // Display the error on the page
+    document.getElementById("query-result").textContent =
+      "Critical Error: Could not load page text.";
+  }
+
   const API_BASE_URL =
     "https://assignments.isaaclauzon.com/comp4537/labs/5/api/v1/sql/";
 
@@ -12,7 +36,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
   // --- Listener for Static Post Button (Part A) ---
   postButton.addEventListener("click", function () {
-    // 1. Define the static data
+    // 2. Define the static data
     const staticData = [
       { name: "Sara Brown", dob: "1901-01-01" },
       { name: "John Smith", dob: "1941-01-01" },
@@ -20,15 +44,16 @@ document.addEventListener("DOMContentLoaded", function () {
       { name: "Elon Musk", dob: "1999-01-01" },
     ];
 
-    // 2. Build the SQL query string from the data
+    // 3. Build the SQL query string from the data
     const values = staticData
       .map((patient) => `('${patient.name}', '${patient.dob}')`)
       .join(", ");
 
     const query = `INSERT INTO patient (name, date_of_birth) VALUES ${values};`;
 
-    // 3. Send the query to the server, matching the API contract
-    queryResult.textContent = "Sending query...";
+    // 4. Send the query to the server, matching the API contract
+    // Use string from lang.json
+    queryResult.textContent = messages.sending;
 
     fetch(API_BASE_URL, {
       method: "POST",
@@ -41,12 +66,13 @@ document.addEventListener("DOMContentLoaded", function () {
     })
       .then((response) => response.json())
       .then((data) => {
-        // 4. Display the server's response
+        // 5. Display the server's response
         queryResult.textContent = JSON.stringify(data, null, 2);
       })
       .catch((error) => {
         console.error("Error:", error);
-        queryResult.textContent = `Error: ${error.message}`;
+        // Use string from lang.json
+        queryResult.textContent = `${messages.errorPrefix}${error.message}`;
       });
   });
 
@@ -58,7 +84,8 @@ document.addEventListener("DOMContentLoaded", function () {
     const query = queryInput.value.trim();
 
     if (!query) {
-      queryResult.textContent = "Please enter a SQL query.";
+      // Use string from lang.json
+      queryResult.textContent = messages.emptyQuery;
       return;
     }
 
@@ -81,13 +108,14 @@ document.addEventListener("DOMContentLoaded", function () {
       // For POST, the query goes in the body
       fetchOptions.body = JSON.stringify({ query: query });
     } else {
-      queryResult.textContent =
-        "Error: Only SELECT and INSERT queries are supported.";
+      // Use string from lang.json
+      queryResult.textContent = messages.unsupportedQuery;
       return;
     }
 
     fetchOptions.method = method;
-    queryResult.textContent = "Sending query...";
+    // Use string from lang.json
+    queryResult.textContent = messages.sending;
 
     // 2. Send the fetch request
     fetch(url, fetchOptions)
@@ -98,7 +126,8 @@ document.addEventListener("DOMContentLoaded", function () {
       })
       .catch((error) => {
         console.error("Error:", error);
-        queryResult.textContent = `Error: ${error.message}`;
+        // Use string from lang.json
+        queryResult.textContent = `${messages.errorPrefix}${error.message}`;
       });
   });
 });
